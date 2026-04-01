@@ -4,6 +4,7 @@ import { Heart, Users, Phone, Mail, Calendar, Home, Clock, Shield, Flower } from
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/Layout";
 import { emailService } from "@/services/emailService";
+import { whatsappService } from "@/services/whatsappService";
 
 export default function PalliativeCarePage() {
   const [formData, setFormData] = useState({
@@ -25,7 +26,8 @@ export default function PalliativeCarePage() {
     setSubmitStatus({ type: null, message: '' });
 
     try {
-      const result = await emailService.sendFormSubmission({
+      // Send email
+      const emailResult = await emailService.sendFormSubmission({
         name: formData.caregiverName,
         email: formData.email,
         phone: formData.phone,
@@ -38,14 +40,28 @@ export default function PalliativeCarePage() {
         }
       });
 
-      if (result.success) {
-        setSubmitStatus({ type: 'success', message: result.message });
+      // Send WhatsApp message
+      const whatsappResult = await whatsappService.sendFormSubmission({
+        name: formData.caregiverName,
+        email: formData.email,
+        phone: formData.phone,
+        message: formData.message,
+        formType: 'Palliative Care Request',
+        additionalData: {
+          patientName: formData.patientName,
+          condition: formData.condition,
+          careType: formData.careType
+        }
+      });
+
+      if (emailResult.success && whatsappResult.success) {
+        setSubmitStatus({ type: 'success', message: 'Request submitted successfully! Details sent to email and WhatsApp.' });
         setFormData({ 
           patientName: "", caregiverName: "", email: "", 
           phone: "", condition: "", careType: "", message: "" 
         });
       } else {
-        setSubmitStatus({ type: 'error', message: result.message });
+        setSubmitStatus({ type: 'error', message: 'Failed to submit request. Please try again.' });
       }
     } catch (error) {
       setSubmitStatus({ type: 'error', message: 'Failed to submit request. Please try again.' });

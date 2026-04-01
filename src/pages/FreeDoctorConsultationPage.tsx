@@ -4,6 +4,7 @@ import { Stethoscope, Calendar, Users, Clock, CheckCircle, Phone, Mail, MapPin }
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/Layout";
 import { emailService } from "@/services/emailService";
+import { whatsappService } from "@/services/whatsappService";
 
 export default function FreeDoctorConsultationPage() {
   const [formData, setFormData] = useState({
@@ -25,7 +26,8 @@ export default function FreeDoctorConsultationPage() {
     setSubmitStatus({ type: null, message: '' });
 
     try {
-      const result = await emailService.sendFormSubmission({
+      // Send email
+      const emailResult = await emailService.sendFormSubmission({
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
@@ -38,14 +40,28 @@ export default function FreeDoctorConsultationPage() {
         }
       });
 
-      if (result.success) {
-        setSubmitStatus({ type: 'success', message: result.message });
+      // Send WhatsApp message
+      const whatsappResult = await whatsappService.sendFormSubmission({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        message: formData.symptoms,
+        formType: 'Doctor Consultation Booking',
+        additionalData: {
+          age: formData.age,
+          preferredDate: formData.preferredDate,
+          preferredTime: formData.preferredTime
+        }
+      });
+
+      if (emailResult.success && whatsappResult.success) {
+        setSubmitStatus({ type: 'success', message: 'Consultation booked successfully! Details sent to email and WhatsApp.' });
         setFormData({ 
           name: "", email: "", phone: "", age: "", 
           symptoms: "", preferredDate: "", preferredTime: "" 
         });
       } else {
-        setSubmitStatus({ type: 'error', message: result.message });
+        setSubmitStatus({ type: 'error', message: 'Failed to book consultation. Please try again.' });
       }
     } catch (error) {
       setSubmitStatus({ type: 'error', message: 'Failed to book consultation. Please try again.' });

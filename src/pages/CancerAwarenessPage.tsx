@@ -4,6 +4,7 @@ import { Heart, Calendar, Users, Target, Award, Megaphone, CheckCircle, AlertTri
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/Layout";
 import { emailService } from "@/services/emailService";
+import { whatsappService } from "@/services/whatsappService";
 
 export default function CancerAwarenessPage() {
   const [formData, setFormData] = useState({
@@ -24,7 +25,8 @@ export default function CancerAwarenessPage() {
     setSubmitStatus({ type: null, message: '' });
 
     try {
-      const result = await emailService.sendFormSubmission({
+      // Send email
+      const emailResult = await emailService.sendFormSubmission({
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
@@ -36,14 +38,27 @@ export default function CancerAwarenessPage() {
         }
       });
 
-      if (result.success) {
-        setSubmitStatus({ type: 'success', message: result.message });
+      // Send WhatsApp message
+      const whatsappResult = await whatsappService.sendFormSubmission({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        message: formData.message,
+        formType: 'Cancer Awareness Registration',
+        additionalData: {
+          organization: formData.organization,
+          event: formData.event
+        }
+      });
+
+      if (emailResult.success && whatsappResult.success) {
+        setSubmitStatus({ type: 'success', message: 'Registration submitted successfully! Details sent to email and WhatsApp.' });
         setFormData({ 
           name: "", email: "", phone: "", 
           organization: "", event: "", message: "" 
         });
       } else {
-        setSubmitStatus({ type: 'error', message: result.message });
+        setSubmitStatus({ type: 'error', message: 'Failed to submit registration. Please try again.' });
       }
     } catch (error) {
       setSubmitStatus({ type: 'error', message: 'Failed to submit registration. Please try again.' });

@@ -4,6 +4,7 @@ import { Heart, Scissors, Users, Calendar, CheckCircle, Phone, Mail, MapPin, Upl
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/Layout";
 import { emailService } from "@/services/emailService";
+import { whatsappService } from "@/services/whatsappService";
 
 export default function DonateHairPage() {
   const [formData, setFormData] = useState({
@@ -28,7 +29,8 @@ export default function DonateHairPage() {
     setSubmitStatus({ type: null, message: '' });
 
     try {
-      const result = await emailService.sendFormSubmission({
+      // Send email
+      const emailResult = await emailService.sendFormSubmission({
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
@@ -43,8 +45,24 @@ export default function DonateHairPage() {
         }
       });
 
-      if (result.success) {
-        setSubmitStatus({ type: 'success', message: result.message });
+      // Send WhatsApp message
+      const whatsappResult = await whatsappService.sendFormSubmission({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        message: formData.message,
+        formType: 'Hair Donation',
+        additionalData: {
+          age: formData.age,
+          hairLength: formData.hairLength,
+          hairType: formData.hairType,
+          donationDate: formData.donationDate,
+          hasPhoto: formData.photo ? 'Yes' : 'No'
+        }
+      });
+
+      if (emailResult.success && whatsappResult.success) {
+        setSubmitStatus({ type: 'success', message: 'Hair donation submitted successfully! Details sent to email and WhatsApp.' });
         setFormData({ 
           name: "", email: "", phone: "", age: "", 
           hairLength: "", hairType: "", donationDate: "", 
@@ -60,7 +78,7 @@ export default function DonateHairPage() {
           formType: 'Hair Donation'
         });
       } else {
-        setSubmitStatus({ type: 'error', message: result.message });
+        setSubmitStatus({ type: 'error', message: 'Failed to submit donation. Please try again.' });
       }
     } catch (error) {
       setSubmitStatus({ type: 'error', message: 'Failed to submit donation. Please try again.' });

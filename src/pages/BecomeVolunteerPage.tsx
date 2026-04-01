@@ -4,6 +4,7 @@ import { Users, Heart, Calendar, Clock, Award, CheckCircle, Phone, Mail, MapPin,
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/Layout";
 import { emailService } from "@/services/emailService";
+import { whatsappService } from "@/services/whatsappService";
 
 export default function BecomeVolunteerPage() {
   const [formData, setFormData] = useState({
@@ -29,7 +30,8 @@ export default function BecomeVolunteerPage() {
     setSubmitStatus({ type: null, message: '' });
 
     try {
-      const result = await emailService.sendFormSubmission({
+      // Send email
+      const emailResult = await emailService.sendFormSubmission({
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
@@ -45,8 +47,25 @@ export default function BecomeVolunteerPage() {
         }
       });
 
-      if (result.success) {
-        setSubmitStatus({ type: 'success', message: result.message });
+      // Send WhatsApp message
+      const whatsappResult = await whatsappService.sendFormSubmission({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        message: formData.message,
+        formType: 'Volunteer Application',
+        additionalData: {
+          age: formData.age,
+          occupation: formData.occupation,
+          availability: formData.availability,
+          interests: formData.interests.join(', '),
+          experience: formData.experience,
+          hasPhoto: formData.photo ? 'Yes' : 'No'
+        }
+      });
+
+      if (emailResult.success && whatsappResult.success) {
+        setSubmitStatus({ type: 'success', message: 'Application submitted successfully! Details sent to email and WhatsApp.' });
         setFormData({ 
           name: "", email: "", phone: "", age: "", 
           occupation: "", availability: "", interests: [], 
@@ -62,7 +81,7 @@ export default function BecomeVolunteerPage() {
           formType: 'Volunteer Application'
         });
       } else {
-        setSubmitStatus({ type: 'error', message: result.message });
+        setSubmitStatus({ type: 'error', message: 'Failed to submit application. Please try again.' });
       }
     } catch (error) {
       setSubmitStatus({ type: 'error', message: 'Failed to submit application. Please try again.' });

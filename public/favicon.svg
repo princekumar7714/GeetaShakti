@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Gradient definition -->
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#dc2626;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#991b1b;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="50" cy="50" r="48" fill="url(#grad1)" />
+  
+  <!-- Heart icon -->
+  <path d="M50 75 
+           C50 75, 20 55, 20 40 
+           C20 30, 28 22, 38 22 
+           C44 22, 48 26, 50 30 
+           C52 26, 56 22, 62 22 
+           C72 22, 80 30, 80 40 
+           C80 55, 50 75, 50 75Z" 
+        fill="white" />
+  
+  <!-- Cancer ribbon integrated -->
+  <path d="M50 35 
+           Q45 45, 45 55 
+           Q45 65, 50 70 
+           Q55 65, 55 55 
+           Q55 45, 50 35" 
+        fill="#fbbf24" 
+        opacity="0.9"/>
+</svg>

@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Search, Calendar, Users, Shield, AlertTriangle, CheckCircle, Activity, Eye } from "lucide-react";
+import { Search, Calendar, Users, Shield, AlertTriangle, CheckCircle, Activity, Eye, Phone, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/Layout";
 import { emailService } from "@/services/emailService";
+import { whatsappService } from "@/services/whatsappService";
 
 export default function EarlyDetectionAwarenessPage() {
   const [formData, setFormData] = useState({
@@ -27,7 +28,8 @@ export default function EarlyDetectionAwarenessPage() {
     setSubmitStatus({ type: null, message: '' });
 
     try {
-      const result = await emailService.sendFormSubmission({
+      // Send email
+      const emailResult = await emailService.sendFormSubmission({
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
@@ -42,8 +44,24 @@ export default function EarlyDetectionAwarenessPage() {
         }
       });
 
-      if (result.success) {
-        setSubmitStatus({ type: 'success', message: result.message });
+      // Send WhatsApp message
+      const whatsappResult = await whatsappService.sendFormSubmission({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        message: formData.message,
+        formType: 'Early Detection Screening Registration',
+        additionalData: {
+          age: formData.age,
+          screeningType: formData.screeningType,
+          familyHistory: formData.familyHistory,
+          symptoms: formData.symptoms,
+          preferredDate: formData.preferredDate
+        }
+      });
+
+      if (emailResult.success && whatsappResult.success) {
+        setSubmitStatus({ type: 'success', message: 'Registration submitted successfully! Details sent to email and WhatsApp.' });
         setFormData({ 
           name: "", email: "", phone: "", 
           age: "", screeningType: "", 
@@ -51,7 +69,7 @@ export default function EarlyDetectionAwarenessPage() {
           preferredDate: "", message: "" 
         });
       } else {
-        setSubmitStatus({ type: 'error', message: result.message });
+        setSubmitStatus({ type: 'error', message: 'Failed to submit registration. Please try again.' });
       }
     } catch (error) {
       setSubmitStatus({ type: 'error', message: 'Failed to submit registration. Please try again.' });

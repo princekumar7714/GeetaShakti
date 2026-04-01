@@ -4,6 +4,7 @@ import { MapPin, Phone, Mail, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/Layout";
 import { emailService } from "@/services/emailService";
+import { whatsappService } from "@/services/whatsappService";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -21,7 +22,8 @@ export default function ContactPage() {
     setSubmitStatus({ type: null, message: '' });
 
     try {
-      const result = await emailService.sendFormSubmission({
+      // Send email
+      const emailResult = await emailService.sendFormSubmission({
         ...formData,
         formType: 'Contact Us',
         additionalData: {
@@ -29,11 +31,20 @@ export default function ContactPage() {
         }
       });
 
-      if (result.success) {
-        setSubmitStatus({ type: 'success', message: result.message });
+      // Send WhatsApp message
+      const whatsappResult = await whatsappService.sendFormSubmission({
+        ...formData,
+        formType: 'Contact Us',
+        additionalData: {
+          phone: formData.phone
+        }
+      });
+
+      if (emailResult.success && whatsappResult.success) {
+        setSubmitStatus({ type: 'success', message: 'Message sent successfully! Details sent to email and WhatsApp.' });
         setFormData({ name: "", email: "", phone: "", message: "" });
       } else {
-        setSubmitStatus({ type: 'error', message: result.message });
+        setSubmitStatus({ type: 'error', message: 'Failed to send message. Please try again.' });
       }
     } catch (error) {
       setSubmitStatus({ type: 'error', message: 'Failed to send message. Please try again.' });

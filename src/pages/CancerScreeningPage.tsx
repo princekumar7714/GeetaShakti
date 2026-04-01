@@ -4,6 +4,7 @@ import { Search, Calendar, Users, Shield, AlertTriangle, CheckCircle, Activity, 
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/Layout";
 import { emailService } from "@/services/emailService";
+import { whatsappService } from "@/services/whatsappService";
 
 export default function CancerScreeningPage() {
   const [formData, setFormData] = useState({
@@ -14,6 +15,7 @@ export default function CancerScreeningPage() {
     screeningType: "",
     familyHistory: "",
     preferredDate: "",
+    symptoms: "",
     message: ""
   });
 
@@ -26,7 +28,8 @@ export default function CancerScreeningPage() {
     setSubmitStatus({ type: null, message: '' });
 
     try {
-      const result = await emailService.sendFormSubmission({
+      // Send email
+      const emailResult = await emailService.sendFormSubmission({
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
@@ -40,15 +43,30 @@ export default function CancerScreeningPage() {
         }
       });
 
-      if (result.success) {
-        setSubmitStatus({ type: 'success', message: result.message });
+      // Send WhatsApp message
+      const whatsappResult = await whatsappService.sendFormSubmission({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        message: formData.message,
+        formType: 'Cancer Screening Registration',
+        additionalData: {
+          age: formData.age,
+          screeningType: formData.screeningType,
+          familyHistory: formData.familyHistory,
+          preferredDate: formData.preferredDate
+        }
+      });
+
+      if (emailResult.success && whatsappResult.success) {
+        setSubmitStatus({ type: 'success', message: 'Screening registration submitted successfully! Details sent to email and WhatsApp.' });
         setFormData({ 
           name: "", email: "", phone: "", 
           age: "", screeningType: "", 
-          familyHistory: "", preferredDate: "", message: "" 
+          familyHistory: "", preferredDate: "", symptoms: "", message: "" 
         });
       } else {
-        setSubmitStatus({ type: 'error', message: result.message });
+        setSubmitStatus({ type: 'error', message: 'Failed to submit registration. Please try again.' });
       }
     } catch (error) {
       setSubmitStatus({ type: 'error', message: 'Failed to submit registration. Please try again.' });

@@ -4,6 +4,7 @@ import { Apple, Heart, Shield, Brain, Activity, Clock, CheckCircle, Utensils } f
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/Layout";
 import { emailService } from "@/services/emailService";
+import { whatsappService } from "@/services/whatsappService";
 
 export default function NutritionalGuidancePage() {
   const [formData, setFormData] = useState({
@@ -27,7 +28,8 @@ export default function NutritionalGuidancePage() {
     setSubmitStatus({ type: null, message: '' });
 
     try {
-      const result = await emailService.sendFormSubmission({
+      // Send email
+      const emailResult = await emailService.sendFormSubmission({
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
@@ -42,8 +44,24 @@ export default function NutritionalGuidancePage() {
         }
       });
 
-      if (result.success) {
-        setSubmitStatus({ type: 'success', message: result.message });
+      // Send WhatsApp message
+      const whatsappResult = await whatsappService.sendFormSubmission({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        message: formData.message,
+        formType: 'Nutritional Guidance Consultation',
+        additionalData: {
+          age: formData.age,
+          healthCondition: formData.healthCondition,
+          dietaryPreferences: formData.dietaryPreferences,
+          consultationType: formData.consultationType,
+          preferredDate: formData.preferredDate
+        }
+      });
+
+      if (emailResult.success && whatsappResult.success) {
+        setSubmitStatus({ type: 'success', message: 'Consultation request submitted successfully! Details sent to email and WhatsApp.' });
         setFormData({ 
           name: "", email: "", phone: "", 
           age: "", healthCondition: "", 
@@ -51,7 +69,7 @@ export default function NutritionalGuidancePage() {
           preferredDate: "", message: "" 
         });
       } else {
-        setSubmitStatus({ type: 'error', message: result.message });
+        setSubmitStatus({ type: 'error', message: 'Failed to submit consultation request. Please try again.' });
       }
     } catch (error) {
       setSubmitStatus({ type: 'error', message: 'Failed to submit consultation request. Please try again.' });

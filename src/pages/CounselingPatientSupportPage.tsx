@@ -4,6 +4,7 @@ import { Heart, Users, Phone, Mail, Calendar, Brain, Smile, Shield, MessageCircl
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/Layout";
 import { emailService } from "@/services/emailService";
+import { whatsappService } from "@/services/whatsappService";
 
 export default function CounselingPatientSupportPage() {
   const [formData, setFormData] = useState({
@@ -25,7 +26,8 @@ export default function CounselingPatientSupportPage() {
     setSubmitStatus({ type: null, message: '' });
 
     try {
-      const result = await emailService.sendFormSubmission({
+      // Send email
+      const emailResult = await emailService.sendFormSubmission({
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
@@ -38,15 +40,29 @@ export default function CounselingPatientSupportPage() {
         }
       });
 
-      if (result.success) {
-        setSubmitStatus({ type: 'success', message: result.message });
+      // Send WhatsApp message
+      const whatsappResult = await whatsappService.sendFormSubmission({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        message: formData.message,
+        formType: 'Counseling & Patient Support Request',
+        additionalData: {
+          patientType: formData.patientType,
+          counselingType: formData.counselingType,
+          preferredTime: formData.preferredTime
+        }
+      });
+
+      if (emailResult.success && whatsappResult.success) {
+        setSubmitStatus({ type: 'success', message: 'Request submitted successfully! Details sent to email and WhatsApp.' });
         setFormData({ 
           name: "", email: "", phone: "", 
           patientType: "", counselingType: "", 
           preferredTime: "", message: "" 
         });
       } else {
-        setSubmitStatus({ type: 'error', message: result.message });
+        setSubmitStatus({ type: 'error', message: 'Failed to submit request. Please try again.' });
       }
     } catch (error) {
       setSubmitStatus({ type: 'error', message: 'Failed to submit request. Please try again.' });

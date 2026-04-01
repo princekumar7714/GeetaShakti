@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import { Heart, Check, Smartphone, QrCode, Copy, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { whatsappService } from "@/services/whatsappService";
 
 // ⚠️ REPLACE THIS with your actual UPI ID
 const UPI_ID = "geetashakti@upi";
@@ -39,6 +40,36 @@ export default function DonationForm() {
     setCopied(true);
     toast.success("UPI ID copied!");
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDonationSubmission = async () => {
+    if (!donorName.trim() || !donorEmail.trim()) {
+      toast.error("Please fill in your details first");
+      return;
+    }
+
+    try {
+      const result = await whatsappService.sendFormSubmission({
+        name: donorName,
+        email: donorEmail,
+        phone: donorPhone,
+        message: `Donation amount: ₹${amount.toLocaleString("en-IN")}`,
+        formType: "Donation",
+        additionalData: {
+          amount: amount,
+          upiId: UPI_ID,
+          paymentMethod: "UPI"
+        }
+      });
+
+      if (result.success) {
+        toast.success("Donation details sent to WhatsApp successfully!");
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error("Failed to send WhatsApp message");
+    }
   };
 
   const isAmountValid = amount >= 10;
@@ -288,6 +319,15 @@ export default function DonationForm() {
                       <span>After payment, you'll receive a confirmation on your UPI app</span>
                     </div>
                   </div>
+
+                  {/* WhatsApp Notification Button */}
+                  <button
+                    onClick={handleDonationSubmission}
+                    className="mt-4 w-full inline-flex items-center justify-center gap-2 py-3.5 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-all shadow-sm"
+                  >
+                    <Smartphone size={18} />
+                    Send Donation Details to WhatsApp
+                  </button>
 
                   <button
                     onClick={() => setStep("amount")}
