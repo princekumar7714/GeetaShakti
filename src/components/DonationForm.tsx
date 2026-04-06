@@ -7,7 +7,7 @@ import { whatsappService } from "@/services/whatsappService";
 import DonationReceipt from "./DonationReceipt";
 
 // ⚠️ REPLACE THIS with your actual UPI ID
-const UPI_ID = "geetashakti@upi";
+const UPI_ID = "gccf@kotak";
 const UPI_NAME = "Geeta Shakti Cancer Care Foundation";
 
 const presetAmounts = [500, 1000, 2000, 5000, 10000, 25000];
