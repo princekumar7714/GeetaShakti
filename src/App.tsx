@@ -23,6 +23,8 @@ import DonateHairPage from "./pages/DonateHairPage";
 import BecomeVolunteerPage from "./pages/BecomeVolunteerPage";
 import ContactPage from "./pages/ContactPage";
 import BlogPage from "./pages/BlogPage";
+import BlogDetailPage from "./pages/BlogDetailPage";
+import BlogSectionPage from "./pages/BlogSectionPage";
 import GetInvolvedPage from "./pages/GetInvolvedPage";
 import MediaPage from "./pages/MediaPage";
 import GalleryPage from "./pages/GalleryPage";

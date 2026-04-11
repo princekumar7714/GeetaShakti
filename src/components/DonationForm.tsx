@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
-import { Heart, Check, Smartphone, QrCode, Copy, CheckCircle2 } from "lucide-react";
+import { Heart, Check, Smartphone, QrCode, Copy, CheckCircle2, Receipt } from "lucide-react";
 import { toast } from "sonner";
 import { whatsappService } from "@/services/whatsappService";
+import DonationReceipt from "./DonationReceipt";
 
 // ⚠️ REPLACE THIS with your actual UPI ID
 const UPI_ID = "geetashakti@upi";
@@ -17,8 +18,10 @@ export default function DonationForm() {
   const [donorName, setDonorName] = useState("");
   const [donorEmail, setDonorEmail] = useState("");
   const [donorPhone, setDonorPhone] = useState("");
-  const [step, setStep] = useState<"amount" | "details" | "pay">("amount");
+  const [step, setStep] = useState<"amount" | "details" | "pay" | "success">("amount");
   const [copied, setCopied] = useState(false);
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [transactionId, setTransactionId] = useState("");
 
   const amount = selectedAmount || (customAmount ? parseInt(customAmount) : 0);
 
@@ -35,6 +38,10 @@ export default function DonationForm() {
     setSelectedAmount(null);
   };
 
+  const generateTransactionId = () => {
+    return `GS${Date.now()}${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+  };
+
   const handleCopyUPI = () => {
     navigator.clipboard.writeText(UPI_ID);
     setCopied(true);
@@ -49,27 +56,37 @@ export default function DonationForm() {
     }
 
     try {
+      // Generate transaction ID
+      const newTransactionId = generateTransactionId();
+      setTransactionId(newTransactionId);
+
       const result = await whatsappService.sendFormSubmission({
         name: donorName,
         email: donorEmail,
         phone: donorPhone,
-        message: `Donation amount: ₹${amount.toLocaleString("en-IN")}`,
+        message: `Donation amount: Rs. ${amount.toLocaleString("en-IN")}`,
         formType: "Donation",
         additionalData: {
           amount: amount,
           upiId: UPI_ID,
-          paymentMethod: "UPI"
+          paymentMethod: "UPI",
+          transactionId: newTransactionId
         }
       });
 
       if (result.success) {
         toast.success("Donation details sent to WhatsApp successfully!");
+        setStep("success");
       } else {
         toast.error(result.message);
       }
     } catch (error) {
       toast.error("Failed to send WhatsApp message");
     }
+  };
+
+  const handleShowReceipt = () => {
+    setShowReceipt(true);
   };
 
   const isAmountValid = amount >= 10;
@@ -97,6 +114,7 @@ export default function DonationForm() {
             { key: "amount", label: "Amount" },
             { key: "details", label: "Details" },
             { key: "pay", label: "Pay" },
+            { key: "success", label: "Success" },
           ].map((s, i) => (
             <div key={s.key} className="flex items-center gap-2">
               <button
@@ -105,20 +123,21 @@ export default function DonationForm() {
                   if (s.key === "details" && isAmountValid) setStep("details");
                   if (s.key === "pay" && isAmountValid && isDetailsValid) setStep("pay");
                 }}
+                disabled={s.key === "success"}
                 className={`w-8 h-8 rounded-full text-xs font-bold flex items-center justify-center transition-colors ${
                   step === s.key
                     ? "bg-accent text-accent-foreground"
                     : (s.key === "amount" || (s.key === "details" && isAmountValid) || (s.key === "pay" && isDetailsValid))
                     ? "bg-muted text-muted-foreground hover:bg-accent/20"
                     : "bg-muted text-muted-foreground/40"
-                }`}
+                } ${s.key === "success" ? "cursor-not-allowed" : ""}`}
               >
                 {i + 1}
               </button>
               <span className={`text-xs font-medium hidden sm:block ${step === s.key ? "text-accent" : "text-muted-foreground"}`}>
                 {s.label}
               </span>
-              {i < 2 && <div className="w-8 sm:w-16 h-px bg-border" />}
+              {i < 3 && <div className="w-8 sm:w-16 h-px bg-border" />}
             </div>
           ))}
         </div>
@@ -338,9 +357,84 @@ export default function DonationForm() {
                 </div>
               </motion.div>
             )}
+
+            {/* Step 4: Success */}
+            {step === "success" && (
+              <motion.div
+                key="success"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                className="p-6 md:p-10 text-center"
+              >
+                <div className="mb-6">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle2 size={32} className="text-green-600" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-card-foreground mb-2">Thank You!</h3>
+                  <p className="text-muted-foreground">
+                    Your donation of <span className="font-bold text-accent tabular-nums">Rs. {amount.toLocaleString("en-IN")}</span> has been received.
+                  </p>
+                </div>
+
+                <div className="bg-muted/50 rounded-xl p-4 mb-6">
+                  <div className="text-sm text-muted-foreground mb-1">Transaction ID</div>
+                  <div className="font-mono font-semibold text-card-foreground">{transactionId}</div>
+                </div>
+
+                <div className="space-y-3 mb-6">
+                  <p className="text-sm text-muted-foreground">
+                    A confirmation has been sent to your WhatsApp. You will also receive an email receipt shortly.
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Your contribution helps us provide care and support to cancer patients.
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <button
+                    onClick={handleShowReceipt}
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-accent text-accent-foreground font-semibold rounded-xl hover:-translate-y-0.5 transition-all shadow-sm"
+                  >
+                    <Receipt size={18} />
+                    View Receipt
+                  </button>
+                  <button
+                    onClick={() => {
+                      // Reset form for new donation
+                      setStep("amount");
+                      setSelectedAmount(1000);
+                      setCustomAmount("");
+                      setDonorName("");
+                      setDonorEmail("");
+                      setDonorPhone("");
+                      setTransactionId("");
+                    }}
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-border text-card-foreground font-medium rounded-xl hover:bg-muted transition-colors"
+                  >
+                    Make Another Donation
+                  </button>
+                </div>
+              </motion.div>
+            )}
           </AnimatePresence>
         </div>
       </div>
+      
+      {/* Donation Receipt Modal */}
+      <DonationReceipt
+        isVisible={showReceipt}
+        onClose={() => setShowReceipt(false)}
+        donationData={{
+          donorName,
+          donorEmail,
+          donorPhone,
+          amount,
+          transactionId,
+          paymentMethod: "UPI",
+          timestamp: new Date()
+        }}
+      />
     </section>
   );
 }
