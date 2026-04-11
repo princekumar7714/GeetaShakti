@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
-import { Heart, Check, Smartphone, QrCode, Copy, CheckCircle2, Receipt } from "lucide-react";
+import { Heart, Check, Smartphone, QrCode, Copy, CheckCircle2, Receipt, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { whatsappService } from "@/services/whatsappService";
 import DonationReceipt from "./DonationReceipt";

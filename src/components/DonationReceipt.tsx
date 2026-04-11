@@ -2,17 +2,12 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Download,
-  Print,
+  Printer,
   Mail,
   Share2,
   CheckCircle,
-  Calendar,
-  User,
-  CreditCard,
-  Building,
 } from "lucide-react";
 import { toast } from "sonner";
-import html2pdf from "html2pdf.js";
 
 interface DonationReceiptProps {
   isVisible: boolean;
@@ -35,7 +30,6 @@ export default function DonationReceipt({
 }: DonationReceiptProps) {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
-  // ✅ Escape HTML (security fix)
   const escapeHTML = (str: string = "") =>
     str.replace(/[&<>"']/g, (tag) =>
       ({
@@ -44,7 +38,7 @@ export default function DonationReceipt({
         ">": "&gt;",
         '"': "&quot;",
         "'": "&#39;",
-      }[tag] || tag)
+      }[tag]!)
     );
 
   // ✅ Generate Receipt HTML
@@ -77,18 +71,23 @@ export default function DonationReceipt({
     `;
   };
 
-  // ✅ Download PDF (FIXED)
   const handleDownloadPDF = async () => {
     setIsGeneratingPDF(true);
     try {
-      const element = document.createElement("div");
-      element.innerHTML = generateReceiptHTML();
-
-      await html2pdf()
-        .from(element)
-        .save(`receipt-${donationData.transactionId}.pdf`);
-
-      toast.success("PDF downloaded!");
+      const printWindow = window.open("", "_blank");
+      if (printWindow) {
+        printWindow.document.write(`
+          <html>
+          <head><title>Donation Receipt - ${donationData.transactionId}</title></head>
+          <body>${generateReceiptHTML()}</body>
+          </html>
+        `);
+        printWindow.document.close();
+        setTimeout(() => {
+          printWindow.print();
+        }, 500);
+        toast.success("Receipt ready for download!");
+      }
     } catch (err) {
       toast.error("Failed to generate PDF");
     } finally {
@@ -181,7 +180,7 @@ export default function DonationReceipt({
                 onClick={handlePrint}
                 className="bg-gray-600 text-white p-2 rounded"
               >
-                <Print size={16} /> Print
+                <Printer size={16} /> Print
               </button>
 
               <button
